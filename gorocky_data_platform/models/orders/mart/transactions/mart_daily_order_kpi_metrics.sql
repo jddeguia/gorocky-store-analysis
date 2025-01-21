@@ -26,22 +26,39 @@ fulfillment_rate AS (
     GROUP BY order_date
 ),
 
-
-daily_sales AS (
+daily_sales_and_profit AS (
     SELECT
         order_date,
-        SUM(sales) AS total_sales
+        SUM(sales) AS total_sales,
+        SUM(profit) AS total_profit
     FROM {{ ref('mart_fct_order_transactions') }}
     GROUP BY order_date
 ),
 
-sales_growth AS (
+sales_and_profit_growth AS (
     SELECT
         order_date,
         total_sales,
+        total_profit,
         LAG(total_sales) OVER (ORDER BY order_date) AS previous_day_sales,
-        (total_sales - LAG(total_sales) OVER (ORDER BY order_date)) / LAG(total_sales) OVER (ORDER BY order_date) * 100 AS sales_growth_percentage
-    FROM daily_sales
+        LAG(total_profit) OVER (ORDER BY order_date) AS previous_day_profit,
+        -- Sales Growth with Capping
+        CASE 
+            WHEN LAG(total_sales) OVER (ORDER BY order_date) = 0 THEN NULL
+            WHEN ((total_sales - LAG(total_sales) OVER (ORDER BY order_date)) 
+                  / LAG(total_sales) OVER (ORDER BY order_date) * 100) > 100 THEN 100
+            ELSE (total_sales - LAG(total_sales) OVER (ORDER BY order_date)) 
+                 / LAG(total_sales) OVER (ORDER BY order_date) * 100
+        END AS sales_growth_percentage,
+        -- Profit Growth with Capping
+        CASE 
+            WHEN LAG(total_profit) OVER (ORDER BY order_date) = 0 THEN NULL
+            WHEN ((total_profit - LAG(total_profit) OVER (ORDER BY order_date)) 
+                  / LAG(total_profit) OVER (ORDER BY order_date) * 100) > 100 THEN 100
+            ELSE (total_profit - LAG(total_profit) OVER (ORDER BY order_date)) 
+                 / LAG(total_profit) OVER (ORDER BY order_date) * 100
+        END AS profit_growth_percentage
+    FROM daily_sales_and_profit
 )
 
 SELECT
@@ -54,8 +71,9 @@ SELECT
     o.total_orders,
     o.total_customers,
     f.fulfillment_rate,
-    s.sales_growth_percentage
+    g.sales_growth_percentage,
+    g.profit_growth_percentage
 FROM order_data o
 LEFT JOIN fulfillment_rate f ON o.order_date = f.order_date
-LEFT JOIN sales_growth s ON o.order_date = s.order_date
+LEFT JOIN sales_and_profit_growth g ON o.order_date = g.order_date
 ORDER BY o.order_date
