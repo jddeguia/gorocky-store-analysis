@@ -1,9 +1,3 @@
-{{
-    config(
-      materialized='table'
-    )
-}}
-
 WITH order_data AS (
     SELECT
         order_date,
@@ -21,44 +15,42 @@ WITH order_data AS (
 fulfillment_rate AS (
     SELECT
         order_date,
-        COUNT(CASE WHEN DATEDIFF('DAY', CAST(order_date AS DATE), CAST(ship_date AS DATE)) <= 3 THEN 1 END) / COUNT(*) AS fulfillment_rate
+        COUNT(CASE WHEN DATEDIFF('DAY', CAST(order_date AS DATE), CAST(ship_date AS DATE)) <= 3 THEN 1 END) * 1.0 / COUNT(*) AS fulfillment_rate
     FROM {{ ref('mart_fct_order_transactions') }}
     GROUP BY order_date
 ),
 
-daily_sales_and_profit AS (
+monthly_sales_and_profit AS (
     SELECT
-        order_date,
+        DATE_TRUNC('MONTH', order_date) AS order_month,
         SUM(sales) AS total_sales,
         SUM(profit) AS total_profit
     FROM {{ ref('mart_fct_order_transactions') }}
-    GROUP BY order_date
+    GROUP BY DATE_TRUNC('MONTH', order_date)
 ),
 
 sales_and_profit_growth AS (
     SELECT
-        order_date,
-        total_sales,
-        total_profit,
-        LAG(total_sales) OVER (ORDER BY order_date) AS previous_day_sales,
-        LAG(total_profit) OVER (ORDER BY order_date) AS previous_day_profit,
+        order_month,
+        LAG(total_sales) OVER (ORDER BY order_month) AS previous_month_sales,
+        LAG(total_profit) OVER (ORDER BY order_month) AS previous_month_profit,
         -- Sales Growth with Capping
         CASE 
-            WHEN LAG(total_sales) OVER (ORDER BY order_date) = 0 THEN NULL
-            WHEN ((total_sales - LAG(total_sales) OVER (ORDER BY order_date)) 
-                  / LAG(total_sales) OVER (ORDER BY order_date) * 100) > 100 THEN 100
-            ELSE (total_sales - LAG(total_sales) OVER (ORDER BY order_date)) 
-                 / LAG(total_sales) OVER (ORDER BY order_date) * 100
+            WHEN LAG(total_sales) OVER (ORDER BY order_month) = 0 THEN NULL
+            WHEN ((total_sales - LAG(total_sales) OVER (ORDER BY order_month)) 
+                  / LAG(total_sales) OVER (ORDER BY order_month) * 100) > 100 THEN 100
+            ELSE (total_sales - LAG(total_sales) OVER (ORDER BY order_month)) 
+                 / LAG(total_sales) OVER (ORDER BY order_month) * 100
         END AS sales_growth_percentage,
         -- Profit Growth with Capping
         CASE 
-            WHEN LAG(total_profit) OVER (ORDER BY order_date) = 0 THEN NULL
-            WHEN ((total_profit - LAG(total_profit) OVER (ORDER BY order_date)) 
-                  / LAG(total_profit) OVER (ORDER BY order_date) * 100) > 100 THEN 100
-            ELSE (total_profit - LAG(total_profit) OVER (ORDER BY order_date)) 
-                 / LAG(total_profit) OVER (ORDER BY order_date) * 100
+            WHEN LAG(total_profit) OVER (ORDER BY order_month) = 0 THEN NULL
+            WHEN ((total_profit - LAG(total_profit) OVER (ORDER BY order_month)) 
+                  / LAG(total_profit) OVER (ORDER BY order_month) * 100) > 100 THEN 100
+            ELSE (total_profit - LAG(total_profit) OVER (ORDER BY order_month)) 
+                 / LAG(total_profit) OVER (ORDER BY order_month) * 100
         END AS profit_growth_percentage
-    FROM daily_sales_and_profit
+    FROM monthly_sales_and_profit
 )
 
 SELECT
@@ -75,5 +67,6 @@ SELECT
     g.profit_growth_percentage
 FROM order_data o
 LEFT JOIN fulfillment_rate f ON o.order_date = f.order_date
-LEFT JOIN sales_and_profit_growth g ON o.order_date = g.order_date
+LEFT JOIN sales_and_profit_growth g 
+    ON DATE_TRUNC('MONTH', o.order_date) = g.order_month
 ORDER BY o.order_date
