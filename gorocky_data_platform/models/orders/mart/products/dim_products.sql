@@ -5,13 +5,16 @@
 }}
 
 WITH base AS (
-    SELECT DISTINCT
+    SELECT 
         product_id,
         segment,
         category,
         sub_category,
-        product_name
+        product_name,
+        ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY order_date DESC) AS row_number
     FROM {{ref('stg_orders')}}
 )
 
-SELECT * FROM base
+SELECT *
+FROM base
+WHERE row_number = 1
