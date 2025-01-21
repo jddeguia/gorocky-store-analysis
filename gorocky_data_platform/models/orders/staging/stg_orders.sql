@@ -28,7 +28,7 @@
 
 WITH order_base AS (
     SELECT * 
-    FROM {{ref('base_orders')}}
+    FROM {{ ref('base_orders') }}
 ),
 
 cast_data_type AS (
@@ -43,13 +43,7 @@ cast_data_type AS (
             {% elif data_type == 'float' %}
                 CAST({{ column }} AS FLOAT) AS {{ column }}
             {% elif data_type == 'date' %}
-                CAST(
-                    CASE 
-                        WHEN LENGTH({{ column }}) = 10 THEN
-                            SUBSTRING({{ column }}, 7, 4) || '-' || 
-                            LPAD(SUBSTRING({{ column }}, 1, 2), 2, '0') || '-' || 
-                            LPAD(SUBSTRING({{ column }}, 4, 2), 2, '0')
-                    END AS DATE) AS {{ column }}
+                TRY_CAST(STRPTIME({{ column }}, '%m/%d/%Y') AS DATE) AS {{ column }}
             {% else %}
                 {{ column }} AS {{ column }}
             {% endif %}
