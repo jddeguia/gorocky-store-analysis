@@ -4,7 +4,7 @@ import duckdb
 conn = duckdb.connect(database='./dev.duckdb', read_only=False)
 
 # Your query
-query = "SELECT * FROM mart_daily_order_kpi_metrics LIMIT 10"
+query = "SELECT * FROM dim_customers LIMIT 10"
 
 # Execute the query and save the result to a CSV file
 conn.execute(query).df().to_csv('output.csv', index=False)
