@@ -1,5 +1,11 @@
 # Superstore Order Analysis
 
+The process involved in the project is shown in the image below
+![image](https://github.com/user-attachments/assets/6111c7ab-67f7-4ae0-bc54-beda27f34e16)
+- We load the given CSV file and use dbt seed to load it on a dbt project
+- We transform the CSV file into medallion layers (base, staging, and mart model)
+- We test the transformed model using a Python script that connects to DuckDB
+- We export the tables as CSV files and use those files as a data source on Looker Studio (the dashboard platform used)
 
 The output of the assessment is a dashboard. 
 
