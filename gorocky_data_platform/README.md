@@ -5,9 +5,12 @@
 ![image](https://github.com/user-attachments/assets/4c070875-2eed-4ee2-bd5d-9c7cad8cc89a)
 
 The models are separated into 3 layers
-- base layer. This is where we expose the data source in dbt project 
-- staging layer. This is where we clean the column and explicitly cast the appropriate data type on each column
-- mart layer. This is where we expose the end result of the cleaned model to end users
+- base layer. This is where we expose the data source in dbt project. The name of the model is `base_orders.sql`
+- staging layer. This is where we clean the column and explicitly cast the appropriate data type on each column. The name of the model is `stg_orders.sql`
+- mart layer. This is where we expose the end result of the cleaned model to end users. We used 3 mart models. We have 2 dimensional models `dim_customers.sql` and `dim_products.sql` which is extracted from the events table. We considered querying the latest info about the customer and the product. We have 1 fact table which is `mart_fct_order_transactions.sql`
+
+## Test the models
+- We have a Python script named `duckdb_test.py` that exports the mart model as a CSV. We use CSV as a data source on our dashboard
 
 ## Insights
 - Fasteners has the lowest profit made (product sub-category) while Phones has the highest profit
