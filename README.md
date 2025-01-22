@@ -20,6 +20,14 @@ The dashboard contains the following charts
 - Total Orders by Ship Mode and Region
 - Details of the Order Transaction
 
-
-
+This is the data lineage of the models involved in the dashboard
 ![image](https://github.com/user-attachments/assets/4c070875-2eed-4ee2-bd5d-9c7cad8cc89a)
+
+So the philosophy of the data modelling is
+- expose the data source in dbt project (base layer)
+- clean the column and explicitly cast the appropriate data type on each column (staging layer)
+- expose the end result of the cleaned model to end users (mart model)
+
+The SQL files and Python scripts used in this project can be accessed in this link
+
+[SQL and Python files](https://github.com/jddeguia/gorocky-store-analysis/tree/main/gorocky_data_platform)
