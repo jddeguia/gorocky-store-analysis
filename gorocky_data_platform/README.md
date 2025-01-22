@@ -18,6 +18,8 @@ The models are separated into 3 layers
 - The store wasn't really doing well due to high operational cost
 - California has the highest made profit while Tennesee has the lowest made profit
 - California also has the highest orders made while Florida has the lowest
+- The peak profit made was recorded on September 23, 2014 and has a profit of 4.6K USD
+- The range of date was recorded from Jan 3, 2014 upto Dec 31, 2014
 - Most orders are shipped using Standard Class, while the least are in the same day mode
 - Most orders are done from the East Region while the South has the lowest orders made
 
